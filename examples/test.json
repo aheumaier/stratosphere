@@ -1,0 +1,137 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {},
+    "resources":[ 
+    {
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[toLower('UbuntuVM1storage')]",
+        "apiVersion": "2015-06-15",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "displayName": "UbuntuVM1 Storage Account"
+        },
+        "properties": {
+            "accountType": "Standard_LRS"
+        }
+    },
+    {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "UbuntuVM1-PublicIP",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "displayName": "PublicIPAddress"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+                "domainNameLabel": "[toLower('UbuntuVM1')]"
+            }
+        }
+    },
+    {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "UbuntuVM1-VirtualNetwork",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "displayName": "VirtualNetwork"
+        },
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "10.0.0.0/16"
+                ]
+            },
+            "subnets": [
+                {
+                    "name": "UbuntuVM1-VirtualNetwork-Subnet",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "UbuntuVM1-NetworkInterface",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+            "Microsoft.Network/publicIPAddresses/UbuntuVM1-PublicIP",
+            "Microsoft.Network/virtualNetworks/UbuntuVM1-VirtualNetwork"
+        ],
+        "tags": {
+            "displayName": "UbuntuVM1-NetworkInterface"
+        },
+        "properties": {
+            "ipConfigurations": [
+                {
+                    "name": "ipconfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'UbuntuVM1-PublicIP')]"
+                        },
+                        "subnet": {
+                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'UbuntuVM1-VirtualNetwork'), '/subnets/UbuntuVM1-VirtualNetwork-Subnet')]"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "UbuntuVM1",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', toLower('UbuntuVM1storage'))]",
+            "Microsoft.Network/networkInterfaces/UbuntuVM1-NetworkInterface"
+        ],
+        "tags": {
+            "displayName": "UbuntuVM1"
+        },
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "Standard_D1"
+            },
+            "osProfile": {
+                "computerName": "UbuntuVM1",
+                "adminUsername": "ADMIN_USERNAME",
+                "adminPassword": "ADMIN_PASSWORD"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "Canonical",
+                    "offer": "UbuntuServer",
+                    "sku": "16.04-LTS",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "UbuntuVM1-OSDisk",
+                    "vhd": {
+                        "uri": "[concat('http://', toLower('UbuntuVM1storage'), '.blob.core.windows.net/vhds/UbuntuVM1-OSDisk.vhd')]"
+                    },
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', 'UbuntuVM1-NetworkInterface')]"
+                    }
+                ]
+            }
+        }
+    }
+    
+    
+    ],
+    "outputs": {}
+}
