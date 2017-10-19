@@ -1,2 +1,4 @@
 .vs/
 .vscode/
+*.pyc
+stratosphere/__pycache__
