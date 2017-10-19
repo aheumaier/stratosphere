@@ -2,18 +2,20 @@ import os,sys,inspect
 
 from stratosphere import *
 
+
 DEBUG=False
 
-if DEBUG:
-    print(sys.modules)
-    print('')
-    print('')
-
 # generate template 
-t = Template()
-print(dumps(t))
+template = Template()
 
-#print('SchemeURL: '+ t.schema )
-print( 'Anything else: '+str(t.__dict__) )
+vm_instance = template.add_resource( VirtualMachine(
+    location = 'westus',
+    hardware_profile ='HardwareProfile(vmSize=vmsize)',
+    storage_profile ='storage_profile',
+    os_profile ='os_profile',
+    network_profile ='network_profile'
+))
+
+print(dumps(template))
 
 

@@ -1,8 +1,13 @@
-
 from stratosphere.azure import Azure
 from stratosphere.aws import AWS
 
-from stratosphere.helpers import *
+MAX_MAPPINGS = 100
+MAX_OUTPUTS = 60
+MAX_PARAMETERS = 6
+MAX_RESOURCES = 200
+PARAMETER_TITLE_MAX = 255
+MAX_LENGTH = 24
+
 
 class Template(Azure):
 
@@ -12,16 +17,21 @@ class Template(Azure):
     def handle_duplicate_key(self, key):
         raise ValueError('duplicate key "%s" detected' % key)
 
-    def _update(self, d, values):
+    def _update(self, attr, values):
         if isinstance(values, list):
             for v in values:
-                if v.title in d:
-                    self.handle_duplicate_key(v.title)
-                d[v.title] = v
+                if v.name in d:
+                    self.handle_duplicate_key(v.name)
+                attr[v.name] = v
         else:
-            if values.title in d:
-                self.handle_duplicate_key(values.title)
-            d[values.title] = values
+            if values.name in attr:      
+                self.handle_duplicate_key(values.name)
+            if isinstance(attr, list): 
+                attr.append(values)
+            elif isinstance(attr, dict):
+                attr[values.name] = values
+            else:
+                raise AttributeError('Wrong Input Type detected')
         return values
 
     def add_output(self, output):
@@ -36,9 +46,8 @@ class Template(Azure):
 
     def add_resource(self, resource):
         if len(self.resources) >= MAX_RESOURCES:
-            raise ValueError('Maximum number of resources %d reached'
-                             % MAX_RESOURCES)
-        return self._update(self.resources, resource)
+            raise ValueError('Maximum number of resources %d reached' % MAX_RESOURCES)
+        return self._update( self.resources, resource)
 
     def add_version(self, version=None):
         if version:
@@ -46,9 +55,5 @@ class Template(Azure):
         else:
             self.version = "2010-09-09"
 
-class Resource(Template):
-    def resourceId(self):
-        return resourceId(self.type, self.name)
-
-class SubResource(Template):
-    pass
+    def __str__(self):
+        return   json.dumps(self)
