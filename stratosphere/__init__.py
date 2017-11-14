@@ -15,7 +15,8 @@ from stratosphere.aws import AWS
 from stratosphere.template import Template
 from stratosphere.helpers import *
 
-from azure.mgmt.compute.models import *
+
+import azure
 
 __version__ = "0.0.1"
 
